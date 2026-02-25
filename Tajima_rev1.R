@@ -7,12 +7,12 @@ library(ggplot2)
 
 #########################################
 
-folder <- "/mnt/Dane/Szop/RADy/do_plotor/RAD/" 
-resFolder <- "/mnt/Dane/Szop/RADy/do_plotor/RAD/tajima/"
+folder <- "/path/do/data/folder" 
+resFolder <- "/path/do/results/folder"
+
 popmap <- paste0(folder,"pop_mapy/popmap_RAD_B_S.txt")
 popsFile <- read.table(popmap, header = FALSE, sep = "\t", col.names = c("ID", "pop"))
-
-vcf_path <- paste0(folder,"vcf_maf001.recode.vcf")
+vcf_path <- paste0(folder,"vcfy/minGQ30minDP10mac3maxmiss095biall_inds_ann.recode.vcf")
 
 #########################################
 get_strict_categories <- function(vcf_path) {
@@ -202,3 +202,32 @@ if(x) {
   is_4fold <- FALSE
 })
 
+#####################################################
+####### Fis and Heterozygosity stats ################
+#####################################################
+
+hierfs_data <- hierfstat::genind2hierfstat(gl2gi(gl_standard))
+statystyki <- basic.stats(hierfs_data)
+rownames(statystyki$Fis) <- sub("^X","",rownames(statystyki$Fis))
+rownames(statystyki$Fis) <- sub("\\.\\.$","",rownames(statystyki$Fis))
+rownames(statystyki$Ho) <- sub("^X","",rownames(statystyki$Ho))
+rownames(statystyki$Ho) <- sub("\\.\\.$","",rownames(statystyki$Ho))
+rownames(statystyki$Hs) <- sub("^X","",rownames(statystyki$Hs))
+rownames(statystyki$Hs) <- sub("\\.\\.$","",rownames(statystyki$Hs))
+
+fis_results <- gl.report.heterozygosity(
+  gl_standard, 
+  method = "pop", 
+  nboots = 1000, 
+  conf = 0.95, 
+  CI.type = "bca"
+)
+
+write.table(fis_results[,c(1,3,5,8,9,11,12,18,19,21,22,33,34,36,37)], 
+            file = paste0(folder,"HoHeFis.xls"), sep = "\t", quote = FALSE, col.names = NA)
+write.table(statystyki$Fis, 
+            file = paste0(folder,"Fis_perLoc.xls"), sep = "\t", quote = FALSE, col.names = NA)
+write.table(statystyki$Hs, 
+            file = paste0(folder,"Hs_perLoc.xls"), sep = "\t", quote = FALSE, col.names = NA)
+write.table(statystyki$Ho, 
+            file = paste0(folder,"Ho_perLoc.xls"), sep = "\t", quote = FALSE, col.names = NA)
